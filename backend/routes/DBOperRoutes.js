@@ -102,5 +102,10 @@ router.delete("/", async (req, res) => {
 
 })
 
+// Health check endpoint
+router.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 //exporting this router function to be using it in the index.js
 module.exports = router;

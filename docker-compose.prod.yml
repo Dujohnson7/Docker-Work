@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # MariaDB Database
+  mariadb:
+    image: mariadb:10.11
+    container_name: crud-mariadb-prod
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+
+  # Backend API (using registry image)
+  backend:
+    image: dujohnson7/crud-backend:latest
+    container_name: crud-backend-prod
+    restart: unless-stopped
+    environment:
+      DB_HOST: mariadb
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_TABLENAME: users
+      DB_WAITFORCONNECTIONS: "true"
+      DB_CONNECTIONLIMIT: "10"
+      DB_QUEUELIMIT: "0"
+      PORT: 5000
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  # Frontend React App (using registry image)
+  frontend:
+    image: dujohnson7/crud-frontend:latest
+    container_name: crud-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local

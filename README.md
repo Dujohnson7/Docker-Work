@@ -1,32 +1,182 @@
-<h1>MySQL CRUD - Nodejs, Reactjs</h1>
+# MySQL CRUD Application - Production Deployment
 
-<p>This app allows users to save users with name and email with specific id for everyone, featuring functionalities like create, read, update, delete. It uses MySQL as the database to store users, Express.js for handling server-side logic, React.js for building the user interface, and Node.js for server-side runtime environment. The app provides a seamless experience for users to save users and time.</p>
-<h3>Running the Project Locally</h3>
-  <p>To run this project on your local machine, follow these steps:
+A full-stack MySQL CRUD application with Node.js backend, React frontend, and MariaDB database, containerized for production deployment.
 
-1. <b>Clone the Repository</b>: Clone this repository to your local machine:
+## Architecture
 
-   git clone <repository_url>
+- **Database**: MariaDB 10.11
+- **Backend**: Node.js (Express) API
+- **Frontend**: React (Vite) served via NGINX
+- **Container Registry**: Docker Hub (dujohnson7)
 
-2. <b>Navigate to Project Directory</b>: Move into the project directory:
+## Project Structure
 
-   cd <project_directory>
+```
+devops/
+├── .github/
+│   └── workflows/
+│       ├── backend.yml        # GitHub Actions workflow for backend
+│       └── frontend.yml       # GitHub Actions workflow for frontend
+├── backend/                   # Node.js API
+│   ├── Dockerfile
+│   ├── package.json
+│   └── ...
+├── frontend/                  # React app
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── ...
+├── k8s/                       # Kubernetes manifests
+│   ├── mariadb-dp.yaml
+│   ├── nodejs-api-deployment.yaml
+│   ├── nodejs-api-service.yaml
+│   ├── react-app-config.yaml
+│   ├── react-deployment.yaml
+│   └── react-service.yaml
+├── mariadb/                   # Database initialization
+│   └── init.sql
+├── docker-compose.yml         # Development Docker Compose
+├── docker-compose.prod.yml    # Production Docker Compose
+└── README.md
+```
 
-3. <b>Install Dependencies</b>: Install the necessary dependencies using npm or yarn:
+## Quick Start
 
-   npm install
+### Prerequisites
 
-   or
+- Docker and Docker Compose
+- Node.js 18+ (for local development)
+- kubectl (for Kubernetes deployment)
 
-   yarn
+### Local Development
 
-4. <b>Setup Environment Variables</b>: Create a `.env` file in the root of your project directory and add the variables given in `.env.sample`
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Aadiel1/devops.git
+   cd devops
+   ```
 
-5. <b>Start the Development Server</b>: Run the following command to start the development server:
+2. **Start the application**
+   ```bash
+   docker-compose up --build
+   ```
 
-   npm start
+3. **Access the application**
+   - Frontend: http://localhost
+   - Backend API: http://localhost:5000
+   - Database: localhost:3306
 
-6. <b>Access the App</b>: Open your web browser and navigate to  frontend `http://localhost:5000` to access the app. You can now use the app locally on your machine, connected to your MySQL database using the variables specified in the `.env` file.
+### Production Deployment
 
-7. <b>Note</b>: The project may not work if you do not install dependencies in both front end and backend. So you would have to apply step 2 and 3 twice, once in frontend and once in backend.
-</p>
+#### Docker Compose (Production)
+
+1. **Set up environment variables**
+   ```bash
+   cp env.prod.example .env
+   # Edit .env with your production values
+   ```
+
+2. **Deploy with production images**
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+#### Kubernetes Deployment
+
+1. **Apply Kubernetes manifests**
+   ```bash
+   kubectl apply -f k8s/
+   ```
+
+2. **Check deployment status**
+   ```bash
+   kubectl get pods
+   kubectl get services
+   ```
+
+3. **Get external IP**
+   ```bash
+   kubectl get service react-service
+   ```
+
+## GitHub Actions
+
+The repository includes automated CI/CD workflows:
+
+- **Backend Workflow** (`.github/workflows/backend.yml`): Builds and pushes backend images
+- **Frontend Workflow** (`.github/workflows/frontend.yml`): Builds and pushes frontend images
+
+### Required Secrets
+
+Add these secrets to your GitHub repository:
+
+- `DOCKER_USERNAME`: Your Docker Hub username
+- `DOCKER_PASSWORD`: Your Docker Hub password/token
+
+## API Endpoints
+
+- `GET /` - Get all users
+- `POST /` - Create a new user
+- `PUT /` - Update a user
+- `DELETE /` - Delete a user
+- `GET /health` - Health check
+
+## Environment Variables
+
+### Backend
+- `DB_HOST`: Database host (default: mariadb)
+- `DB_USER`: Database user
+- `DB_PASSWORD`: Database password
+- `DB_DATABASE`: Database name
+- `DB_TABLENAME`: Table name
+- `PORT`: Server port (default: 5000)
+
+### Frontend
+- `API_URL`: Backend API URL (default: /api)
+
+## Database Schema
+
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database connection issues**
+   - Check if MariaDB is running and healthy
+   - Verify environment variables
+   - Check network connectivity
+
+2. **Frontend not loading**
+   - Verify NGINX configuration
+   - Check if backend is accessible
+   - Review container logs
+
+3. **Kubernetes deployment issues**
+   - Check pod status: `kubectl describe pod <pod-name>`
+   - Review logs: `kubectl logs <pod-name>`
+   - Verify secrets and configmaps
+
+### Health Checks
+
+- Backend: `GET /health`
+- Frontend: `GET /`
+- Database: `mysqladmin ping`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test locally with Docker Compose
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
