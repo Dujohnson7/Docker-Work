@@ -1,4 +1,4 @@
--- Create database if it doesn't exist
+ 
 CREATE DATABASE IF NOT EXISTS crud_app;
 
 -- Use the database
